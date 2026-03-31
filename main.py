@@ -1,12 +1,14 @@
 """
-SPARTAN - Main Application
+SPARTAN - Main Application (Simplified Version)
 AI-Powered Item Placement & Classification System
 """
 
 import streamlit as st
 import pandas as pd
 import time
+import os
 from datetime import datetime
+from pathlib import Path
 
 # SPARTAN imports
 from config.settings import AWS_REGIONS, REQUIRED_COLUMNS, OPTIONAL_COLUMNS
@@ -16,7 +18,7 @@ from utils.aws_utils import test_bedrock_connection, get_model_display_name
 from utils.ui_helpers import (
     apply_spartan_theme, render_spartan_header, render_section_header,
     display_cost_info, calculate_estimated_cost, display_file_validation_status,
-    display_processing_metrics, create_results_expandables, render_file_upload_section
+    display_processing_metrics, create_results_expandables
 )
 
 # Page configuration
@@ -29,6 +31,48 @@ st.set_page_config(
 
 # Apply theme
 apply_spartan_theme()
+
+
+def get_data_directory():
+    """Get the data directory path"""
+    # Check if running from current directory
+    if os.path.exists("data"):
+        return "data"
+    # Check if in parent directory (for different deployment scenarios)
+    elif os.path.exists("../data"):
+        return "../data"
+    # Default to current directory
+    return "data"
+
+
+def load_hardcoded_data():
+    """Load MCH Bible and Reference Data from hardcoded files"""
+    data_dir = get_data_directory()
+    
+    bible_df = None
+    reference_df = None
+    
+    # Load MCH Bible
+    bible_path = os.path.join(data_dir, "mch_bible.csv")
+    if os.path.exists(bible_path):
+        try:
+            bible_df = pd.read_csv(bible_path)
+            st.session_state.bible_df = bible_df
+        except Exception as e:
+            st.error(f"Error loading MCH Bible: {str(e)}")
+    
+    # Load Reference Data
+    reference_path = os.path.join(data_dir, "reference_data.csv")
+    if os.path.exists(reference_path):
+        try:
+            reference_df = pd.read_csv(reference_path)
+            st.session_state.reference_df = reference_df
+        except Exception as e:
+            st.warning(f"Could not load reference data: {str(e)}")
+            # Continue without reference data
+            st.session_state.reference_df = None
+    
+    return bible_df, reference_df
 
 
 def render_barcode_test_section():
@@ -98,75 +142,94 @@ def load_file_data(uploaded_file):
         return pd.read_excel(uploaded_file)
 
 
-def render_file_upload_sections():
-    """Render the file upload sections"""
-    render_section_header("📁 File Upload")
+def render_data_status_section():
+    """Render status of hardcoded data"""
+    render_section_header("📊 Data Status")
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     
-    bible_file = None
-    reference_file = None
-    items_file = None
-    
-    # Bible upload
     with col1:
-        bible_file = render_file_upload_section("1. MCH Bible", "bible", "Upload MCH Levels")
-        
-        if bible_file:
-            try:
-                bible_df = load_file_data(bible_file)
-                st.session_state.bible_df = bible_df
-                st.success(f"✅ **{len(bible_df)} levels loaded**")
-                with st.expander("Preview"):
-                    st.dataframe(bible_df.head(3), height=120)
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
+        st.markdown("**📚 MCH Bible**")
+        bible_df = st.session_state.get('bible_df')
+        if bible_df is not None:
+            st.success(f"✅ **{len(bible_df)} MCH levels loaded**")
+            with st.expander("Preview MCH Bible"):
+                st.dataframe(bible_df.head(10), height=200)
+        else:
+            st.error("❌ MCH Bible not loaded")
     
-    # Reference upload  
     with col2:
-        reference_file = render_file_upload_section("2. Reference Data", "reference", "Upload Reference File")
-        
-        if reference_file:
-            try:
-                reference_df = load_file_data(reference_file)
-                st.session_state.reference_df = reference_df
-                st.success(f"✅ **{len(reference_df)} items loaded**")
-                
-                if display_file_validation_status(reference_df, REQUIRED_COLUMNS, OPTIONAL_COLUMNS):
-                    with st.expander("Preview"):
-                        st.dataframe(reference_df.head(3), height=120)
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
+        st.markdown("**📖 Reference Database**")
+        reference_df = st.session_state.get('reference_df')
+        if reference_df is not None:
+            st.success(f"✅ **{len(reference_df)} reference items loaded**")
+            with st.expander("Preview Reference Data"):
+                st.dataframe(reference_df.head(10), height=200)
+        else:
+            st.info("ℹ️ No reference data (will use AI only)")
+
+
+def render_file_upload_section():
+    """Render the simplified file upload section"""
+    render_section_header("📁 Upload Items to Process")
     
-    # Items upload
-    with col3:
-        items_file = render_file_upload_section("3. Items to Process", "items", "Upload Items")
-        
-        if items_file:
-            try:
-                items_df = load_file_data(items_file)
-                st.session_state.items_df = items_df
-                st.success(f"✅ **{len(items_df)} items loaded**")
-                
-                if display_file_validation_status(items_df, REQUIRED_COLUMNS, OPTIONAL_COLUMNS):
-                    with st.expander("Preview"):
-                        st.dataframe(items_df.head(3), height=120)
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
-                st.session_state.items_df = None
+    st.markdown("""
+    Upload a CSV or Excel file with items to classify. 
     
-    return bible_file, reference_file, items_file
+    **Required column:** `description`  
+    **Optional columns:** `manufacturer`, `barcode`, `barcode_number`, `ean`, `upc`
+    """)
+    
+    items_file = st.file_uploader(
+        "Choose your file",
+        type=['csv', 'xlsx'],
+        key="items_upload",
+        help="Upload CSV or Excel file with items to classify"
+    )
+    
+    if items_file:
+        try:
+            items_df = load_file_data(items_file)
+            st.session_state.items_df = items_df
+            
+            # Validate file
+            if display_file_validation_status(items_df, REQUIRED_COLUMNS, OPTIONAL_COLUMNS):
+                col1, col2 = st.columns([2, 1])
+                with col1:
+                    st.success(f"✅ **{len(items_df)} items loaded and validated**")
+                with col2:
+                    if st.button("📋 Preview Data"):
+                        st.session_state.show_preview = True
+                
+                if st.session_state.get('show_preview', False):
+                    with st.expander("📊 Data Preview", expanded=True):
+                        st.dataframe(items_df.head(10), height=250)
+                        if st.button("Hide Preview"):
+                            st.session_state.show_preview = False
+        except Exception as e:
+            st.error(f"Error loading file: {str(e)}")
+            st.session_state.items_df = None
+    else:
+        st.session_state.items_df = None
 
 
 def render_processing_section(cost_mode, selected_region):
     """Render the processing section"""
-    # Check if all files are loaded
+    # Check if all required data is loaded
     bible_df = st.session_state.get('bible_df')
-    reference_df = st.session_state.get('reference_df')
     items_df = st.session_state.get('items_df')
     working_model = st.session_state.get('working_model')
     
-    if not all([bible_df is not None, reference_df is not None, items_df is not None, working_model]):
+    # Reference data is optional
+    reference_df = st.session_state.get('reference_df')
+    
+    if not all([bible_df is not None, items_df is not None, working_model]):
+        if bible_df is None:
+            st.warning("⚠️ MCH Bible data not loaded. Please check data directory.")
+        if items_df is None:
+            st.info("📤 Upload a file with items to process")
+        if working_model is None:
+            st.info("🔗 Test AWS connection in sidebar")
         return
     
     render_section_header("⚡ Processing")
@@ -188,6 +251,12 @@ def render_processing_section(cost_mode, selected_region):
         estimated_cost = calculate_estimated_cost(cost_mode, max_items)
         st.metric("**Est. Cost**", f"${estimated_cost:.2f}")
     
+    # Show reference data status
+    if reference_df is not None:
+        st.info(f"ℹ️ Using reference database with {len(reference_df)} items for improved accuracy")
+    else:
+        st.info("ℹ️ No reference data - using AI classification only")
+    
     if process_button:
         process_items(bible_df, reference_df, items_df, max_items, cost_mode, selected_region, working_model)
 
@@ -204,7 +273,13 @@ def process_items(bible_df, reference_df, items_df, max_items, cost_mode, select
         
         # Load data
         ai_assistant.load_bible(bible_df)
-        ai_assistant.load_reference_file(reference_df)
+        
+        # Load reference data only if available
+        if reference_df is not None:
+            ai_assistant.load_reference_file(reference_df)
+            st.info("✅ Reference database loaded for enhanced matching")
+        else:
+            st.info("ℹ️ Processing without reference data - relying on AI analysis")
         
         # Prepare items subset
         items_subset = items_df.head(max_items)
@@ -236,6 +311,8 @@ def process_items(bible_df, reference_df, items_df, max_items, cost_mode, select
         
     except Exception as e:
         st.error(f"Failed to process items: {str(e)}")
+        import traceback
+        st.error(f"Details: {traceback.format_exc()}")
 
 
 def render_results_section(results_df):
@@ -268,14 +345,28 @@ def main():
     # Render header
     render_spartan_header()
     
+    # Display app info
+    st.markdown("""
+    **Welcome to SPARTAN!** This AI-powered system automatically classifies retail items into appropriate MCH categories.
+    Simply upload your items file and let the AI do the work! 🚀
+    """)
+    
+    # Load hardcoded data
+    if 'bible_df' not in st.session_state or 'reference_df' not in st.session_state:
+        with st.spinner("Loading MCH Bible and Reference Data..."):
+            bible_df, reference_df = load_hardcoded_data()
+    
     # Render barcode test
     render_barcode_test_section()
     
     # Render sidebar and get settings
     cost_mode, selected_region = render_sidebar()
     
-    # Render file upload sections
-    render_file_upload_sections()
+    # Show data status
+    render_data_status_section()
+    
+    # Render file upload section
+    render_file_upload_section()
     
     # Render processing section
     render_processing_section(cost_mode, selected_region)
