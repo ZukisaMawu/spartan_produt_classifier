@@ -112,8 +112,8 @@ def render_spartan_header():
     """Render the main SPARTAN header"""
     st.markdown("""
     <div class="main-header">
-        <h1>⚡ SPARTAN</h1>
-        <p>AI-Powered Item Placement & Classification System</p>
+        <h1></h1>
+        <p>Item Placement & Classification System</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -153,12 +153,12 @@ def display_file_validation_status(df, required_cols: list, optional_cols: list)
     available_optional = [col for col in optional_cols if col in df.columns]
     
     if missing_required:
-        st.error(f"❌ Missing required columns: {', '.join(missing_required)}")
+        st.error(f"Missing required columns: {', '.join(missing_required)}")
         return False
     else:
-        st.info("✅ Format validated")
+        st.info("Format validated")
         if available_optional:
-            st.info(f"📊 Extra columns: {', '.join(available_optional)}")
+            st.info(f"Extra columns: {', '.join(available_optional)}")
         return True
 
 
@@ -197,19 +197,19 @@ def create_results_expandables(results_df, metrics):
     
     # Barcode Lookups
     if metrics['lookups'] > 0:
-        with st.expander(f"🔍 **Barcode Lookups** ({metrics['lookups']} items)"):
+        with st.expander(f"**Barcode Lookups** ({metrics['lookups']} items)"):
             lookup_items = results_df[results_df['online_lookup_found'] == True]
             st.dataframe(lookup_items[['original_description', 'lookup_product_name', 'mch_levels', 'confidence_score']])
     
     # Reference Matches
     if metrics['references'] > 0:
-        with st.expander(f"📚 **Reference Matches** ({metrics['references']} items)"):
+        with st.expander(f"**Reference Matches** ({metrics['references']} items)"):
             ref_items = results_df[results_df['reference_match_found'] == True]
             st.dataframe(ref_items[['original_description', 'mch_levels', 'confidence_score']])
     
     # Errors
     if metrics['errors'] > 0:
-        with st.expander(f"⚠️ **Errors** ({metrics['errors']} items)"):
+        with st.expander(f"**Errors** ({metrics['errors']} items)"):
             error_items = results_df[results_df['mch_levels'].str.contains('ERROR')]
             st.dataframe(error_items[['original_description', 'mch_levels', 'reasoning']])
 
