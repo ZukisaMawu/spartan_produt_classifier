@@ -100,20 +100,25 @@ class ItemPlacementAI:
         
         product_info = "\\n".join(product_info_parts)
         
-        # Include reference data sample
+        # Include reference data sample (if available)
         reference_data = ""
-        if self.reference_df is not None:
+        reference_available = False
+        if self.reference_df is not None and len(self.reference_df) > 0:
             sample_size = min(MAX_REFERENCE_SAMPLE_SIZE, len(self.reference_df))
             reference_sample = self.reference_df.head(sample_size)
             reference_data = reference_sample.to_string(index=False)
+            reference_available = True
         
-        prompt = f"""You are SPARTAN AI - a precise retail categorizer for South African stores. You have access to a bible of allowed MCH levels and a reference database of previously categorized items.
+        prompt = f"""You are SPARTAN AI - a precise retail categorizer for South African stores. You have access to a bible of allowed MCH levels{' and a reference database of previously categorized items' if reference_available else ''}.
 
 === BIBLE STRUCTURE (ONLY ALLOWED MCH LEVELS) ===
 {bible_categories}
 
-=== REFERENCE DATABASE (PREVIOUSLY CATEGORIZED ITEMS) ===
-{reference_data if reference_data else "No reference data available"}
+{f'''=== REFERENCE DATABASE (PREVIOUSLY CATEGORIZED ITEMS) ===
+{reference_data}
+''' if reference_available else '=== NOTE: NO REFERENCE DATABASE AVAILABLE ===
+You will need to rely entirely on the product information and your understanding to classify items.
+'}
 
 === ITEM TO CATEGORIZE ===
 {product_info}
@@ -127,10 +132,15 @@ class ItemPlacementAI:
    - Food items are sold at the in store Deli. this may include cooked food, pastries, sandwiches, etc. Check description and 
      place accordingly with MCH in deli category name or 'grab&go' product class name in the mch levels.
 
-2. PRIORITY 2 - REFERENCE DATABASE MATCHING:
+{f'''2. PRIORITY 2 - REFERENCE DATABASE MATCHING:
    - Search for IDENTICAL or VERY SIMILAR descriptions
    - If exact match found, copy the MCH levels classification exactly
    - Prioritize exact matches over partial matches
+''' if reference_available else '2. PRIORITY 2 - DIRECT ANALYSIS:
+   - No reference database available
+   - Analyze product type from description and available information
+   - Match to appropriate MCH level based on product characteristics
+'}
 
 3. PRIORITY 3 - BARCODE TYPE ANALYSIS:
    - ISBN (978/979 + 10+ digits) = Books → Look for book categories
@@ -150,10 +160,10 @@ class ItemPlacementAI:
 {{
     "mch_levels": "EXACT_MCH_LEVELS_FROM_BIBLE_OR_UNCERTAIN",
     "confidence_score": 0.95,
-    "reference_match_found": true,
+    "reference_match_found": {'true' if reference_available else 'false'},
     "product_type": "Brief product description",
     "barcode_lookup_used": true,
-    "reasoning": "Detailed explanation including barcode analysis and reference matching"
+    "reasoning": "Detailed explanation including barcode analysis{'and reference matching' if reference_available else ''}"
 }}
 
 CRITICAL: Response must be valid JSON only. Use exact MCH levels from bible. Include all analysis in reasoning."""
