@@ -93,16 +93,16 @@ def render_barcode_test_section():
                 lookup = BarcodeProductLookup()
                 result = lookup.lookup_barcode(test_barcode)
                 if result["found"]:
-                    st.success(f"✅ **Found:** {result.get('title', 'Unknown Product')}")
+                    st.success(f"**Found:** {result.get('title', 'Unknown Product')}")
                     st.json(result)
                 else:
-                    st.warning("❌ Product not found in databases")
+                    st.warning("Product not found in databases")
 
 
 def render_sidebar():
     """Render the sidebar configuration"""
     with st.sidebar:
-        render_section_header("⚙️ Configuration")
+        render_section_header("Configuration")
         
         # Cost optimization
         cost_mode = st.selectbox(
@@ -118,7 +118,7 @@ def render_sidebar():
         selected_region = st.selectbox("**AWS Region**", AWS_REGIONS)
         
         # Connection test
-        if st.button("🔗 **Test Connection**", type="primary"):
+        if st.button("**Test Connection**", type="primary"):
             with st.spinner("Testing..."):
                 connection_ok, working_model = test_bedrock_connection(selected_region)
                 if working_model:
@@ -127,7 +127,7 @@ def render_sidebar():
         # Display connection status
         if st.session_state.get('working_model'):
             model_name = get_model_display_name(st.session_state.working_model)
-            st.success(f"✅ **Connected:** {model_name}")
+            st.success(f"**Connected:** {model_name}")
         else:
             st.info("Test connection to continue")
     
@@ -144,25 +144,25 @@ def load_file_data(uploaded_file):
 
 def render_data_status_section():
     """Render status of hardcoded data"""
-    render_section_header("📊 Data Status")
+    render_section_header("Data Status")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("**📚 MCH Bible**")
+        st.markdown("**MCH Bible**")
         bible_df = st.session_state.get('bible_df')
         if bible_df is not None:
-            st.success(f"✅ **{len(bible_df)} MCH levels loaded**")
+            st.success(f"**{len(bible_df)} MCH levels loaded**")
             with st.expander("Preview MCH Bible"):
                 st.dataframe(bible_df.head(10), height=200)
         else:
-            st.error("❌ MCH Bible not loaded")
+            st.error("MCH Bible not loaded")
     
     with col2:
-        st.markdown("**📖 Reference Database**")
+        st.markdown("**Reference Database**")
         reference_df = st.session_state.get('reference_df')
         if reference_df is not None:
-            st.success(f"✅ **{len(reference_df)} reference items loaded**")
+            st.success(f"**{len(reference_df)} reference items loaded**")
             with st.expander("Preview Reference Data"):
                 st.dataframe(reference_df.head(10), height=200)
         else:
@@ -171,7 +171,7 @@ def render_data_status_section():
 
 def render_file_upload_section():
     """Render the simplified file upload section"""
-    render_section_header("📁 Upload Items to Process")
+    render_section_header("Upload Items to Process")
     
     st.markdown("""
     Upload a CSV or Excel file with items to classify. 
@@ -196,13 +196,13 @@ def render_file_upload_section():
             if display_file_validation_status(items_df, REQUIRED_COLUMNS, OPTIONAL_COLUMNS):
                 col1, col2 = st.columns([2, 1])
                 with col1:
-                    st.success(f"✅ **{len(items_df)} items loaded and validated**")
+                    st.success(f"**{len(items_df)} items loaded and validated**")
                 with col2:
-                    if st.button("📋 Preview Data"):
+                    if st.button("Preview Data"):
                         st.session_state.show_preview = True
                 
                 if st.session_state.get('show_preview', False):
-                    with st.expander("📊 Data Preview", expanded=True):
+                    with st.expander("Data Preview", expanded=True):
                         st.dataframe(items_df.head(10), height=250)
                         if st.button("Hide Preview"):
                             st.session_state.show_preview = False
@@ -225,18 +225,18 @@ def render_processing_section(cost_mode, selected_region):
     
     if not all([bible_df is not None, items_df is not None, working_model]):
         if bible_df is None:
-            st.warning("⚠️ MCH Bible data not loaded. Please check data directory.")
+            st.warning("MCH Bible data not loaded. Please check data directory.")
         if items_df is None:
-            st.info("📤 Upload a file with items to process")
+            st.info("Upload a file with items to process")
         if working_model is None:
             st.info("🔗 Test AWS connection in sidebar")
         return
     
-    render_section_header("⚡ Processing")
+    render_section_header("Processing")
     
     col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
     with col1:
-        process_button = st.button("🚀 **PROCESS ITEMS**", type="primary")
+        process_button = st.button("**PROCESS ITEMS**", type="primary")
     with col2:
         max_items = st.number_input(
             "Max items", 
@@ -253,9 +253,9 @@ def render_processing_section(cost_mode, selected_region):
     
     # Show reference data status
     if reference_df is not None:
-        st.info(f"ℹ️ Using reference database with {len(reference_df)} items for improved accuracy")
+        st.info(f"Using reference database with {len(reference_df)} items for improved accuracy")
     else:
-        st.info("ℹ️ No reference data - using AI classification only")
+        st.info("No reference data - using AI classification only")
     
     if process_button:
         process_items(bible_df, reference_df, items_df, max_items, cost_mode, selected_region, working_model)
@@ -277,9 +277,9 @@ def process_items(bible_df, reference_df, items_df, max_items, cost_mode, select
         # Load reference data only if available
         if reference_df is not None:
             ai_assistant.load_reference_file(reference_df)
-            st.info("✅ Reference database loaded for enhanced matching")
+            st.info("Reference database loaded for enhanced matching")
         else:
-            st.info("ℹ️ Processing without reference data - relying on AI analysis")
+            st.info("Processing without reference data - relying on AI analysis")
         
         # Prepare items subset
         items_subset = items_df.head(max_items)
@@ -304,7 +304,7 @@ def process_items(bible_df, reference_df, items_df, max_items, cost_mode, select
         progress_bar.empty()
         
         # Display success message
-        st.success(f"✅ **Processing completed in {processing_time:.1f}s**")
+        st.success(f"**Processing completed in {processing_time:.1f}s**")
         
         # Display results
         render_results_section(results_df)
@@ -317,7 +317,7 @@ def process_items(bible_df, reference_df, items_df, max_items, cost_mode, select
 
 def render_results_section(results_df):
     """Render the results section"""
-    render_section_header("📊 Results")
+    render_section_header("Results")
     
     # Display metrics
     metrics = display_processing_metrics(results_df)
@@ -329,7 +329,7 @@ def render_results_section(results_df):
     csv = results_df.to_csv(index=False)
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     st.download_button(
-        "📥 **Download Results**",
+        "**Download Results**",
         data=csv,
         file_name=f"spartan_results_{timestamp}.csv",
         mime="text/csv",
@@ -347,8 +347,8 @@ def main():
     
     # Display app info
     st.markdown("""
-    **Welcome to SPARTAN!** This AI-powered system automatically classifies retail items into appropriate MCH categories.
-    Simply upload your items file and let the AI do the work! 🚀
+    This AI-powered system automatically classifies retail items into appropriate MCH categories.
+    
     """)
     
     # Load hardcoded data
