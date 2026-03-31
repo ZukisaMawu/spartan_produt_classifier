@@ -112,7 +112,7 @@ def render_spartan_header():
     """Render the main SPARTAN header"""
     st.markdown("""
     <div class="main-header">
-        <h1> Spartan </h1>
+        <h1>  </h1>
         <p>Item Placement & Classification System</p>
     </div>
     """, unsafe_allow_html=True)
