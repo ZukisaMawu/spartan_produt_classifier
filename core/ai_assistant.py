@@ -116,9 +116,9 @@ class ItemPlacementAI:
 
 {f'''=== REFERENCE DATABASE (PREVIOUSLY CATEGORIZED ITEMS) ===
 {reference_data}
-''' if reference_available else '=== NOTE: NO REFERENCE DATABASE AVAILABLE ===
-You will need to rely entirely on the product information and your understanding to classify items.
-'}
+''' if reference_available else '''=== NOTE: NO REFERENCE DATABASE AVAILABLE ===
+    You will need to rely entirely on the product information and your understanding to classify items.
+'''}
 
 === ITEM TO CATEGORIZE ===
 {product_info}
@@ -136,11 +136,11 @@ You will need to rely entirely on the product information and your understanding
    - Search for IDENTICAL or VERY SIMILAR descriptions
    - If exact match found, copy the MCH levels classification exactly
    - Prioritize exact matches over partial matches
-''' if reference_available else '2. PRIORITY 2 - DIRECT ANALYSIS:
+''' if reference_available else '''2. PRIORITY 2 - DIRECT ANALYSIS:
    - No reference database available
    - Analyze product type from description and available information
    - Match to appropriate MCH level based on product characteristics
-'}
+'''}
 
 3. PRIORITY 3 - BARCODE TYPE ANALYSIS:
    - ISBN (978/979 + 10+ digits) = Books → Look for book categories
