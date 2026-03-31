@@ -77,7 +77,7 @@ def load_hardcoded_data():
 
 def render_barcode_test_section():
     """Render barcode lookup test section"""
-    with st.expander("🔍 **Barcode Lookup Test**", expanded=False):
+    with st.expander("**Barcode Lookup Test**", expanded=False):
         col1, col2 = st.columns([3, 1])
         with col1:
             test_barcode = st.text_input(
@@ -345,11 +345,11 @@ def main():
     # Render header
     render_spartan_header()
     
-    # Display app info
-    st.markdown("""
-    This AI-powered system automatically classifies retail items into appropriate MCH categories.
+    # # Display app info
+    # st.markdown("""
     
-    """)
+    
+    # """)
     
     # Load hardcoded data
     if 'bible_df' not in st.session_state or 'reference_df' not in st.session_state:
