@@ -23,7 +23,7 @@ from utils.ui_helpers import (
 
 # Page configuration
 st.set_page_config(
-    page_title="SPARtan - AI Item Placement",
+    page_title="Item_Placement_classificati_project",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
