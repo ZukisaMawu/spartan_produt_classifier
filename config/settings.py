@@ -44,9 +44,9 @@ COST_PER_ITEM = {
 
 # Cost Mode Information
 COST_MODE_INFO = {
-    "budget": ("💡", "Using Haiku - Maximum cost efficiency"),
-    "performance": ("🚀", "Using Sonnet - Maximum accuracy"),
-    "balanced": ("⚖️", "Balanced cost/performance ratio")
+    "budget": ("Using Haiku - Maximum cost efficiency"),
+    "performance": ("Using Sonnet - Maximum accuracy"),
+    "balanced": ("Balanced cost/performance ratio")
 }
 
 # Processing Configuration
